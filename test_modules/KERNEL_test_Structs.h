@@ -1,10 +1,10 @@
 
-struct NK_matrixBuilder : public::testing::Test
-{
 
-    KERNEL::scalar AlgoTolerance = 1e-15;
-    KERNEL::scalar TestTolerance = 1e-8;
+struct NK_matrixBuilder : public::testing::Test {
+
+    KERNEL::scalar tolerance = 1e-15;
     unsigned int maxIter = 100000;
+
     //    ( 2 1 0 0 0 0 )    ( x_0 )       (1)
     //    ( 0 2 1 0 0 0 )    ( x_1 )       (2)
     //    ( 0 0 2 1 0 0 )    ( x_2 )       (1)
@@ -15,8 +15,6 @@ struct NK_matrixBuilder : public::testing::Test
     // solution: x = (0, 1, 0, 1, 0, 1)ˆT
     template<typename MatrixType>
     void setSparseProblem_1(MatrixType& A, KERNEL::vector& b, KERNEL::vector& solution ) {
-
-        GetToleranceValue(TestTolerance );
 
         fillBand<MatrixType>( blaze::band(A,0), 2.0 );
         fillBand<MatrixType>( blaze::band(A,1), 1.0 );
@@ -49,7 +47,6 @@ struct NK_matrixBuilder : public::testing::Test
     template<typename MatrixType>
     void setSparseProblem_2(MatrixType& A, KERNEL::vector& b, KERNEL::vector& solution )
     {
-        GetToleranceValue(TestTolerance );
         //only for problems bigger then 7
         fillBand<MatrixType>( blaze::band(A,0), -2.0 );
         fillBand<MatrixType>( blaze::band(A,4), 1.0 );
@@ -79,7 +76,6 @@ struct NK_matrixBuilder : public::testing::Test
     template<typename MatrixType>
     void setDenseProblem_1(MatrixType& A, KERNEL::vector& b, KERNEL::vector& solution )
     {
-        GetToleranceValue(TestTolerance );
         auto N = A.rows();
         for (size_t  i = 0; i<N; ++i) {
             for (size_t j = 0; j<N; ++j) {
@@ -92,13 +88,5 @@ struct NK_matrixBuilder : public::testing::Test
         std::iota(b.begin(), b.end(), 1+Q);
         std::iota(solution.begin(), solution.end(), 1.0);
     }
-    void GetToleranceValue(KERNEL::scalar& tolerance )
-    {
-        if constexpr (std::is_same<KERNEL::scalar, float>::value)
-        {
-            tolerance = 1e-3;
-        }else if constexpr (std::is_same<KERNEL::scalar, double>::value) {
-            tolerance = 1e-8;
-        }
-    }
+
 };

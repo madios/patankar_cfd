@@ -12,10 +12,10 @@ TEST_F(NK_matrixBuilder, sparseMatrix1_BiCGSTAB)
 
     setSparseProblem_1<KERNEL::smatrix>(A, b, solution);
 
-    solve_BiCGSTAB<KERNEL::smatrix>( A, x, b, AlgoTolerance, maxIter);
+    solve_BiCGSTAB<KERNEL::smatrix>( A, x, b, tolerance, maxIter);
 
     for(int i = 0; i < solution.size(); i++)
-        EXPECT_NEAR(x[i], solution[i], TestTolerance);
+        EXPECT_NEAR(x[i], solution[i], 1e-8);
 }
 
 TEST_F(NK_matrixBuilder, sparseMatrix2_BiCGSTAB)
@@ -26,10 +26,10 @@ TEST_F(NK_matrixBuilder, sparseMatrix2_BiCGSTAB)
 
     setSparseProblem_2<KERNEL::smatrix>(A, b, solution);
 
-    solve_BiCGSTAB( A, x, b, AlgoTolerance, maxIter  );
+    solve_BiCGSTAB( A, x, b, tolerance, maxIter  );
 
     for(int i = 0; i < solution.size(); i++)
-        EXPECT_NEAR(x[i], solution[i], TestTolerance);
+        EXPECT_NEAR(x[i], solution[i], 1e-8);
 }
 
 
@@ -41,10 +41,10 @@ TEST_F(NK_matrixBuilder, denseMatrix1_BiCGSTAB)
 
     setDenseProblem_1<KERNEL::smatrix>(A, b, solution);
 
-    solve_BiCGSTAB( A, x, b, AlgoTolerance, maxIter  );
+    solve_BiCGSTAB( A, x, b, tolerance, maxIter  );
 
     for(int i = 0; i < solution.size(); i++)
-        EXPECT_NEAR(x[i], solution[i], TestTolerance);
+        EXPECT_NEAR(x[i], solution[i], 1e-8);
 }
 
 TEST_F(NK_matrixBuilder, sparseMatrix1_Jacobi)
@@ -55,11 +55,11 @@ TEST_F(NK_matrixBuilder, sparseMatrix1_Jacobi)
 
     setSparseProblem_1<KERNEL::smatrix>(A, b, solution);
 
-    solve_Jacobi( A, x, b, AlgoTolerance, maxIter  );
+    solve_Jacobi( A, x, b, tolerance, maxIter  );
 
     for(int i = 0; i < solution.size(); i++)
     {
-        EXPECT_NEAR(x[i], solution[i], TestTolerance);
+        EXPECT_NEAR(x[i], solution[i], 1e-8);
     }
 }
 
@@ -71,10 +71,10 @@ TEST_F(NK_matrixBuilder, sparseMatrix2_Jacobi)
 
     setSparseProblem_2<KERNEL::smatrix>(A, b, solution);
 
-    solve_Jacobi( A, x, b, AlgoTolerance, maxIter  );
+    solve_Jacobi( A, x, b, tolerance, maxIter  );
 
     for(int i = 0; i < solution.size(); i++)
-        EXPECT_NEAR(x[i], solution[i], TestTolerance);
+        EXPECT_NEAR(x[i], solution[i], 1e-8);
 }
 
 TEST_F(NK_matrixBuilder, denseMatrix1_Jacobi)
@@ -85,10 +85,10 @@ TEST_F(NK_matrixBuilder, denseMatrix1_Jacobi)
 
     setDenseProblem_1<KERNEL::dmatrix>(A, b, solution);
 
-    solve_Jacobi( A,x, b, AlgoTolerance, maxIter  );
+    solve_Jacobi( A,x, b, tolerance, maxIter  );
 
     for(int i = 0; i < solution.size(); i++)
-        EXPECT_NEAR(x[i], solution[i], TestTolerance);
+        EXPECT_NEAR(x[i], solution[i], 1e-8);
 }
 
 // TEST_F(NK_matrixBuilder, sparseMatrix1_GaussSeidel)
@@ -128,9 +128,9 @@ TEST_F(NK_matrixBuilder, denseMatrix1_GaussSeidel)
 
     setDenseProblem_1<KERNEL::dmatrix>(A, b, solution);
 
-    solve_GaussSeidel( A, x, b, AlgoTolerance, maxIter  );
+    solve_GaussSeidel( A, x, b, tolerance, maxIter  );
 
     for(int i = 0; i < solution.size(); i++)
-        EXPECT_NEAR(x[i], solution[i], TestTolerance);
+        EXPECT_NEAR(x[i], solution[i], 1e-8);
 }
 

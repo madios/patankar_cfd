@@ -51,7 +51,7 @@ namespace KERNEL {
         ObjectRegistry(const ObjectRegistry&) = delete;
         ObjectRegistry& operator=(const ObjectRegistry&) = delete;
 
-        VectorHandle newVector(size_t size, KERNEL::scalar initialValue = 0.0);
+        VectorHandle newVector(size_t size, double initialValue = 0.0);
         MatrixHandle newMatrix(size_t rows, size_t cols, bool sparse = false );
 
 

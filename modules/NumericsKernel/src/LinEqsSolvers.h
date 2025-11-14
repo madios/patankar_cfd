@@ -50,13 +50,11 @@ namespace LINEQSOLVERS {
         KERNEL::scalar rho  = blaze::dot(r0, r0);
         KERNEL::scalar alpha = 0.0, omega = 0.0, rho1 = 0.0, beta = 0.0;
 
-        //const KERNEL::scalar normb = std::max(blaze::norm( b ), 1e-30);
-        const KERNEL::scalar normb = std::max( static_cast<KERNEL::scalar>( blaze::norm(b) ),static_cast<KERNEL::scalar>( 1e-30 ) );
+        const KERNEL::scalar normb = std::max(blaze::norm( b ), 1e-30);
         KERNEL::scalar normres = blaze::norm(r0);
         KERNEL::scalar relres  = normres / normb;
 
-        //const KERNEL::scalar norm_b = std::max(blaze::norm( b ), 1e-30);
-        const KERNEL::scalar norm_b = std::max( static_cast<KERNEL::scalar>( blaze::norm(b) ),static_cast<KERNEL::scalar>( 1e-30 ) );
+        const KERNEL::scalar norm_b = std::max(blaze::norm( b ), 1e-30);
 
         KERNEL::scalar norm_res = blaze::norm(r0);
         KERNEL::scalar rel_res  = norm_res / norm_b;

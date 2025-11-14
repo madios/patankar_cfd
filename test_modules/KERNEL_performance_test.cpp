@@ -38,7 +38,7 @@ TEST_F(NK_matrixBuilder, performance_BiCGSTAB_sparseMatrix1)
         //setDenseProblem_1<KERNEL::smatrix>(A, b, solution);
 
         timer3.start();
-        solve_BiCGSTAB<KERNEL::smatrix>( A, x, b, AlgoTolerance, maxIter);
+        solve_BiCGSTAB<KERNEL::smatrix>( A, x, b, tolerance, maxIter);
         auto T3 = timer3.stop();
         auto T2 = timer2.stop();
         auto T1 = timer1.stop();
