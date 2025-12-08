@@ -37,6 +37,8 @@ namespace LINEQSOLVERS {
 
     void solve_Jacobi(      const KERNEL::dmatrix &A, KERNEL::vector& x, const KERNEL::vector &b, const KERNEL::scalar tolerance, const unsigned int maxIter);
 
+    bool doesJacobiConverge(const KERNEL::dmatrix &A);
+
     // free template class I cannot separate definition from implementation. That leads to linking error.
     template<typename MatrixType>
     void solve_BiCGSTAB(const MatrixType &A, KERNEL::vector& x, const KERNEL::vector& b, const KERNEL::scalar tolerance, const unsigned int maxIter) {
@@ -64,7 +66,11 @@ namespace LINEQSOLVERS {
         {
             v    = A * p;
             KERNEL::scalar vr0 = blaze::dot(v, r0);
-            if (std::fabs(vr0) < 1e-30) break;
+            if (std::fabs(vr0) < 1e-30)
+            {
+                std::cerr << "BiCGSTAB breakdown: v·r0 ≈ 0 → cannot compute alpha (division by zero). Stopping.\n";
+                break;
+            }
 
             alpha = rho / vr0;
 
@@ -72,10 +78,17 @@ namespace LINEQSOLVERS {
             t = A * s;
 
             KERNEL::scalar tt = blaze::dot(t, t);
-            if (tt <= 0.0) break;
+            if (tt <= 0.0) {
+                std::cerr << "BiCGSTAB breakdown: t·t == 0 → cannot compute omega (A*s = 0). Stopping iterations.\n";
+                break;
+            }
 
             omega = blaze::dot(t, s) / tt;
-            if (std::fabs(omega) < 1e-30) break;
+            if (std::fabs(omega) < 1e-30) {
+                std::cerr << "BiCGSTAB breakdown: omega ≈ 0 (|omega|=" << std::fabs(omega)
+                          << ") → division by omega would be unstable. Stopping iterations.\n";
+                break;
+            }
 
             x = x + alpha * p + omega * s;
             r = s - omega * t;
@@ -93,7 +106,7 @@ namespace LINEQSOLVERS {
         if (rel_res <= tolerance)
             std::cout << "Bi_CG_STAB_sparse converged in " << it << " iterations\n";
         else
-            std::cout << "Bi_CG_STAB_sparse NOT converged (iters=" << it << ", rel res=" << rel_res << ").\n";
+            std::cerr << "Bi_CG_STAB_sparse NOT converged (iters=" << it << ", rel res=" << rel_res << ").\n";
     }
 
 

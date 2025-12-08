@@ -1,15 +1,45 @@
 #include "LinEqsSolvers.h"
-
+#include <blaze/math/lapack/clapack/geev.h>
 
 
 namespace LINEQSOLVERS {
+    bool doesJacobiConverge(const KERNEL::dmatrix &A)
+    {
+        auto rows = A.rows();
+        KERNEL::dmatrix B = A;     // deep copy
+
+        //deep copy
+        KERNEL::vector dvec( A.rows() );
+        dvec = blaze::diagonal( A );
+        auto invD = KERNEL::scalar(1.0) / dvec;
+
+        blaze::DiagonalMatrix< KERNEL::smatrix > invDSparse( A.rows() );
+        blaze::diagonal( invDSparse ) = invD;
+        blaze::diagonal(B) = 0.0;
+
+        // calculate spectralradius
+        // Iterationsmatrix G = -D^{-1} * (L+U)
+        KERNEL::dmatrix G = -invDSparse * B;
+        blaze::DynamicVector< std::complex<KERNEL::scalar> > lambda( rows );
+        blaze::geev( G, lambda );
+        auto rho = blaze::max( blaze::map( lambda, [](auto c){ return std::abs(c); } ) );
+        if (rho<1)
+        {
+            std::cout << "Spectral radius = " << rho << " < 1 → Jacobi converges." << std::endl;
+            return true;
+        }else
+        {
+            std::cout << "Spectral radius = " << rho << " ≥ 1 → Jacobi does not converge." << std::endl;
+            return false;
+        }
+    }
+
 
     void solve_Jacobi(const KERNEL::dmatrix &A, KERNEL::vector& x, const KERNEL::vector &b, const KERNEL::scalar tolerance, const unsigned int maxIter)
     {
         auto rows = A.rows();
         //KERNEL::vector x_old ;
-        // we need to make a xold as input.
-        KERNEL::vector x_old( rows, 0.0 );
+        KERNEL::vector x_old = x;
         KERNEL::dmatrix B = A;     // deep copy
 
         //deep copy and diagonal vector as it not working for dense matrix

@@ -25,7 +25,7 @@ TEST_F(NK_matrixBuilder, performance_BiCGSTAB_sparseMatrix1)
     auto timer2 = timer();
     auto timer3 = timer();
 
-    const std::vector<int> sizes = {1000,2000,4000,8000,16000,32000,64000};
+    const std::vector<int> sizes = {125,250,500,1000,2000,4000,8000,16000,32000,64000};
     for (int i = 0; i<sizes.size(); i++) {
         auto N = sizes[i];
         timer1.start();
@@ -39,6 +39,41 @@ TEST_F(NK_matrixBuilder, performance_BiCGSTAB_sparseMatrix1)
 
         timer3.start();
         solve_BiCGSTAB<KERNEL::smatrix>( A, x, b, tolerance, maxIter);
+        auto T3 = timer3.stop();
+        auto T2 = timer2.stop();
+        auto T1 = timer1.stop();
+
+        std::cout << N << ", \t" << T1 << " ms, \t" << T2 << " ms, \t" << T3 << " ms " << std::endl;
+        EXPECT_NEAR(x[2], solution[2], TestTolerance);
+    }
+}
+
+TEST_F(NK_matrixBuilder, performance_Jacobi_sparseMatrix1)
+{
+
+    auto timer1 = timer();
+    auto timer2 = timer();
+    auto timer3 = timer();
+
+    //const std::vector<int> sizes = {1000,2000,4000,8000,16000,32000,64000};
+    const std::vector<int> sizes = {10};
+    auto N = sizes[0];
+    timer1.start();
+    KERNEL::smatrix A(N,N, 5*N);
+    KERNEL::vector b(N,0.0), x(N, 0.0), solution(N, 0.0);
+    for (int i = 0; i<sizes.size(); i++) {
+
+
+        timer2.start();
+        setSparseProblem_1<KERNEL::smatrix>(A, b, solution);
+        //setSparseProblem_2<KERNEL::smatrix>(A, b, solution);
+        //setDenseProblem_1<KERNEL::smatrix>(A, b, solution);
+
+        timer3.start();
+        bool checkConverge = doesJacobiConverge(A);
+        solve_Jacobi( A, x, b, AlgoTolerance, maxIter);
+        std::cout<<A<<std::endl;
+        std::cout<<b<<std::endl;
         auto T3 = timer3.stop();
         auto T2 = timer2.stop();
         auto T1 = timer1.stop();
