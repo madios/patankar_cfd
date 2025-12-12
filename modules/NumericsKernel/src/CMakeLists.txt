@@ -23,6 +23,7 @@ add_library(numerics_kernel_lib STATIC
 target_include_directories(numerics_kernel_lib
         PUBLIC
         ../include
+        ${CMAKE_SOURCE_DIR}/modules/Common
         PRIVATE
         .
 )

@@ -21,6 +21,7 @@ target_link_libraries(tests_run
         PRIVATE
         gtest_main
         numerics_kernel_lib
+        mesh_lib
 )
 
 # Include GoogleTest

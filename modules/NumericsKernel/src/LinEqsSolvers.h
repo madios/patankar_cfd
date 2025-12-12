@@ -7,7 +7,7 @@
 
 // these should be removed
 template<typename MatrixType>
-void fillBand(blaze::Band<MatrixType> band, KERNEL::scalar value) {
+void fillBand(blaze::Band<MatrixType> band, GLOBAL::scalar value) {
     for(size_t i = 0; i < band.size(); i++)  band[i] = value;
 }
 
@@ -33,15 +33,15 @@ void checkLinEqSystemConsistency(const MatrixType& A, const KERNEL::vector& b) {
 namespace LINEQSOLVERS {
 
     // A must be strictly diagonal dominant
-    void solve_GaussSeidel( const KERNEL::dmatrix& A, KERNEL::vector& x, const KERNEL::vector& b, const KERNEL::scalar tolerance, const unsigned int maxIter);
+    void solve_GaussSeidel( const KERNEL::dmatrix& A, KERNEL::vector& x, const KERNEL::vector& b, const GLOBAL::scalar tolerance, const unsigned int maxIter);
 
-    void solve_Jacobi(      const KERNEL::dmatrix &A, KERNEL::vector& x, const KERNEL::vector &b, const KERNEL::scalar tolerance, const unsigned int maxIter);
+    void solve_Jacobi(      const KERNEL::dmatrix &A, KERNEL::vector& x, const KERNEL::vector &b, const GLOBAL::scalar tolerance, const unsigned int maxIter);
 
     bool doesJacobiConverge(const KERNEL::dmatrix &A);
 
     // free template class I cannot separate definition from implementation. That leads to linking error.
     template<typename MatrixType>
-    void solve_BiCGSTAB(const MatrixType &A, KERNEL::vector& x, const KERNEL::vector& b, const KERNEL::scalar tolerance, const unsigned int maxIter) {
+    void solve_BiCGSTAB(const MatrixType &A, KERNEL::vector& x, const KERNEL::vector& b, const GLOBAL::scalar tolerance, const unsigned int maxIter) {
 
         const std::size_t n = A.rows();
         KERNEL::vector r0( b - A * x );
@@ -49,23 +49,23 @@ namespace LINEQSOLVERS {
         KERNEL::vector p  = r;
         KERNEL::vector v(n, 0.0), s(n, 0.0), t(n, 0.0);
 
-        KERNEL::scalar rho  = blaze::dot(r0, r0);
-        KERNEL::scalar alpha = 0.0, omega = 0.0, rho1 = 0.0, beta = 0.0;
+        GLOBAL::scalar rho  = blaze::dot(r0, r0);
+        GLOBAL::scalar alpha = 0.0, omega = 0.0, rho1 = 0.0, beta = 0.0;
 
-        const KERNEL::scalar normb = std::max(blaze::norm( b ), 1e-30);
-        KERNEL::scalar normres = blaze::norm(r0);
-        KERNEL::scalar relres  = normres / normb;
+        const GLOBAL::scalar normb = std::max(blaze::norm( b ), 1e-30);
+        GLOBAL::scalar normres = blaze::norm(r0);
+        GLOBAL::scalar relres  = normres / normb;
 
-        const KERNEL::scalar norm_b = std::max(blaze::norm( b ), 1e-30);
+        const GLOBAL::scalar norm_b = std::max(blaze::norm( b ), 1e-30);
 
-        KERNEL::scalar norm_res = blaze::norm(r0);
-        KERNEL::scalar rel_res  = norm_res / norm_b;
+        GLOBAL::scalar norm_res = blaze::norm(r0);
+        GLOBAL::scalar rel_res  = norm_res / norm_b;
 
         std::size_t it = 0;
         while (rel_res > tolerance && it < maxIter)
         {
             v    = A * p;
-            KERNEL::scalar vr0 = blaze::dot(v, r0);
+            GLOBAL::scalar vr0 = blaze::dot(v, r0);
             if (std::fabs(vr0) < 1e-30)
             {
                 std::cerr << "BiCGSTAB breakdown: v·r0 ≈ 0 → cannot compute alpha (division by zero). Stopping.\n";
@@ -77,7 +77,7 @@ namespace LINEQSOLVERS {
             s = r - alpha * v;
             t = A * s;
 
-            KERNEL::scalar tt = blaze::dot(t, t);
+            GLOBAL::scalar tt = blaze::dot(t, t);
             if (tt <= 0.0) {
                 std::cerr << "BiCGSTAB breakdown: t·t == 0 → cannot compute omega (A*s = 0). Stopping iterations.\n";
                 break;

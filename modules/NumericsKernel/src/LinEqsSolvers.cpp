@@ -11,7 +11,7 @@ namespace LINEQSOLVERS {
         //deep copy
         KERNEL::vector dvec( A.rows() );
         dvec = blaze::diagonal( A );
-        auto invD = KERNEL::scalar(1.0) / dvec;
+        auto invD = GLOBAL::scalar(1.0) / dvec;
 
         blaze::DiagonalMatrix< KERNEL::smatrix > invDSparse( A.rows() );
         blaze::diagonal( invDSparse ) = invD;
@@ -20,7 +20,7 @@ namespace LINEQSOLVERS {
         // calculate spectralradius
         // Iterationsmatrix G = -D^{-1} * (L+U)
         KERNEL::dmatrix G = -invDSparse * B;
-        blaze::DynamicVector< std::complex<KERNEL::scalar> > lambda( rows );
+        blaze::DynamicVector< std::complex<GLOBAL::scalar> > lambda( rows );
         blaze::geev( G, lambda );
         auto rho = blaze::max( blaze::map( lambda, [](auto c){ return std::abs(c); } ) );
         if (rho<1)
@@ -35,7 +35,7 @@ namespace LINEQSOLVERS {
     }
 
 
-    void solve_Jacobi(const KERNEL::dmatrix &A, KERNEL::vector& x, const KERNEL::vector &b, const KERNEL::scalar tolerance, const unsigned int maxIter)
+    void solve_Jacobi(const KERNEL::dmatrix &A, KERNEL::vector& x, const KERNEL::vector &b, const GLOBAL::scalar tolerance, const unsigned int maxIter)
     {
         auto rows = A.rows();
         //KERNEL::vector x_old ;
@@ -45,7 +45,7 @@ namespace LINEQSOLVERS {
         //deep copy and diagonal vector as it not working for dense matrix
         KERNEL::vector dvec( A.rows() );
         dvec = blaze::diagonal( A );
-        auto invD = KERNEL::scalar(1.0) / dvec;
+        auto invD = GLOBAL::scalar(1.0) / dvec;
 
         //for dense Matrix, used the this
         //auto d = blaze::diagonal(A);  // view af diagonalen
@@ -72,7 +72,7 @@ namespace LINEQSOLVERS {
         }
     }
 
-    void solve_GaussSeidel(const KERNEL::dmatrix& A, KERNEL::vector& x, const KERNEL::vector& b, const KERNEL::scalar tolerance, const unsigned int maxIter){
+    void solve_GaussSeidel(const KERNEL::dmatrix& A, KERNEL::vector& x, const KERNEL::vector& b, const GLOBAL::scalar tolerance, const unsigned int maxIter){
 
         auto n = A.rows();
         KERNEL::vector x_old = x;
