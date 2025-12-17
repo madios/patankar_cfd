@@ -33,15 +33,15 @@ void checkLinEqSystemConsistency(const MatrixType& A, const KERNEL::vector& b) {
 namespace LINEQSOLVERS {
 
     // A must be strictly diagonal dominant
-    void solve_GaussSeidel( const KERNEL::dmatrix& A, KERNEL::vector& x, const KERNEL::vector& b, const GLOBAL::scalar tolerance, const unsigned int maxIter);
+    void solve_GaussSeidel( const KERNEL::dmatrix& A, KERNEL::vector& x, const KERNEL::vector& b, const GLOBAL::scalar tolerance, const unsigned int maxIter,bool printDebug = true);
 
-    void solve_Jacobi(      const KERNEL::dmatrix &A, KERNEL::vector& x, const KERNEL::vector &b, const GLOBAL::scalar tolerance, const unsigned int maxIter);
+    void solve_Jacobi(      const KERNEL::dmatrix &A, KERNEL::vector& x, const KERNEL::vector &b, const GLOBAL::scalar tolerance, const unsigned int maxIter,bool printDebug = true);
 
     bool doesJacobiConverge(const KERNEL::dmatrix &A);
 
     // free template class I cannot separate definition from implementation. That leads to linking error.
     template<typename MatrixType>
-    void solve_BiCGSTAB(const MatrixType &A, KERNEL::vector& x, const KERNEL::vector& b, const GLOBAL::scalar tolerance, const unsigned int maxIter) {
+    void solve_BiCGSTAB(const MatrixType &A, KERNEL::vector& x, const KERNEL::vector& b, const GLOBAL::scalar tolerance, const unsigned int maxIter,bool printDebug = true) {
 
         const std::size_t n = A.rows();
         KERNEL::vector r0( b - A * x );
@@ -104,7 +104,12 @@ namespace LINEQSOLVERS {
         }
 
         if (rel_res <= tolerance)
-            std::cout << "Bi_CG_STAB_sparse converged in " << it << " iterations\n";
+        {
+            if (printDebug)
+            {
+                std::cout << "Bi_CG_STAB_sparse converged in " << it << " iterations\n";
+            }
+        }
         else
             std::cerr << "Bi_CG_STAB_sparse NOT converged (iters=" << it << ", rel res=" << rel_res << ").\n";
     }

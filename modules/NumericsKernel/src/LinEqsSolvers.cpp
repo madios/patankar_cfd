@@ -35,7 +35,7 @@ namespace LINEQSOLVERS {
     }
 
 
-    void solve_Jacobi(const KERNEL::dmatrix &A, KERNEL::vector& x, const KERNEL::vector &b, const GLOBAL::scalar tolerance, const unsigned int maxIter)
+    void solve_Jacobi(const KERNEL::dmatrix &A, KERNEL::vector& x, const KERNEL::vector &b, const GLOBAL::scalar tolerance, const unsigned int maxIter, const bool printDebug)
     {
         auto rows = A.rows();
         //KERNEL::vector x_old ;
@@ -61,7 +61,10 @@ namespace LINEQSOLVERS {
             x = invDSparse * rhs;
             if ( blaze::norm(x-x_old) < tolerance)
             {
-                std::cout<<"Jacobi solver converged after "<<  std::to_string(k)<<" iterations."<<std::endl;
+                if (printDebug)
+                {
+                    std::cout<<"Jacobi solver converged after "<<  std::to_string(k)<<" iterations."<<std::endl;
+                }
                 break;
             }
             x_old = x;
@@ -72,7 +75,7 @@ namespace LINEQSOLVERS {
         }
     }
 
-    void solve_GaussSeidel(const KERNEL::dmatrix& A, KERNEL::vector& x, const KERNEL::vector& b, const GLOBAL::scalar tolerance, const unsigned int maxIter){
+    void solve_GaussSeidel(const KERNEL::dmatrix& A, KERNEL::vector& x, const KERNEL::vector& b, const GLOBAL::scalar tolerance, const unsigned int maxIter,bool printDebug){
 
         auto n = A.rows();
         KERNEL::vector x_old = x;
@@ -91,9 +94,9 @@ namespace LINEQSOLVERS {
 
         auto c = invDL*b;
         auto G = -invDL*(A-DL);
-
+        int k;
         // here I could free A,DL,invDL
-        for( int k = 0; k < maxIter; ++k )
+        for( k = 0; k < maxIter; ++k )
         {
             // Using G and c for faster code.
             // x = G * x_old + c
@@ -102,10 +105,17 @@ namespace LINEQSOLVERS {
 
             if( blaze::norm( x - x_old ) < tolerance )
             {
-                std::cout << "Gauss-Seidel solver converged after " << k << " iterations." << std::endl;
+                if (printDebug)
+                {
+                    std::cout << "Gauss-Seidel solver converged after " << k << " iterations." << std::endl;
+                }
                 break;
             }
             x_old = x;
+        }
+        if ( k >= maxIter)
+        {
+            std::cerr<<"Gauss-Seidel solver did not converge within"<<  std::to_string(maxIter)<<" iterations."<<std::endl;
         }
     }
 }
