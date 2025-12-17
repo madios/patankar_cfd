@@ -6,11 +6,11 @@
 #define TODO_H
 #include <fstream>
 #include <iosfwd>
-#include <vector>
+#include "KERNEL.h"
 
 namespace Todo
 {
-    inline void saveAsCSV(const std::vector<double>& vec, const std::string& filename) {
+    inline void saveAsCSV(const KERNEL::vector vec, const std::string& filename) {
         std::ofstream file(filename);
         for (size_t i = 0; i < vec.size(); ++i)
         {

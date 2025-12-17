@@ -3,6 +3,7 @@
 #include <numeric>
 #include "blaze/Blaze.h"
 #include "structured2d.h"
+#include "ToDo.h"
 #include "Util.h"
 
 struct kernelInterface : public ::testing::Test {
@@ -144,7 +145,7 @@ TEST_F(FVM_laplaceTests, FVM_testtest) {
 // This test verifies that the solver correctly applies locally defined Dirichlet boundary conditions using a uniform mesh.
 TEST_F(FVM_laplaceTests, FVM_localDerichletBCs) {
 
-    auto objReg = setUp(3.0, 3,3.0,3);
+    auto objReg = setUp(1.0, 3,1.0,3);
 
     auto A = objReg.getSparseMatrixRef(AHandle);
     auto u = objReg.getVectorRef(uHandle);
@@ -289,24 +290,41 @@ void buildMatrixWithBandsSpeed( KERNEL::smatrix &A,
         b0[i] = -( ae[i] + aw[i] + as[i] + an[i] - sp[i] );
     }
 }
-enum class BoundaryFunction { single ,MultiplyXY };
+enum class BoundaryFunction { single ,MultiplyXY, MultiplyY, SecondPolynomial };
 
-void appliedDirichletBoundaryCondition(const MESH::RegionID region_id, KERNEL::vector& coef, KERNEL::vector& sp, KERNEL::vector& b, const MESH::structured2dRegularRectangle& mesh,const BoundaryFunction& boundaryFunction )
+void appliedDirichlet(const int cellId,const MESH::RegionID region_id, KERNEL::vector& coef, KERNEL::vector& sp, KERNEL::vector& b, const MESH::structured2dRegularRectangle& mesh,const BoundaryFunction& boundaryFunction)
+{
+    GLOBAL::scalar boundaryValue = 0;
+    auto cellFacePos = mesh.getCellFacePos(region_id, cellId);
+    switch (boundaryFunction)
+    {
+        case BoundaryFunction::MultiplyXY: boundaryValue =  cellFacePos.first*cellFacePos.second; break;
+        case BoundaryFunction::MultiplyY: boundaryValue =  cellFacePos.second; break;
+        case BoundaryFunction::SecondPolynomial: boundaryValue = cellFacePos.first * cellFacePos.first; break;   // -x * x + 2 * x // -x * x + 2 * x
+        case BoundaryFunction::single    : boundaryValue =  1; break;
+
+    }
+    coef[cellId]  = 0.0;
+    b   [cellId] -= 2*mesh.getCellFaceAreal_X()/mesh.getCellSpacing_X() * boundaryValue;  // du har glemt at kigge på Y retningen afhængig af hvilken vej du kigger
+    sp  [cellId] -= 2*mesh.getCellFaceAreal_X()/mesh.getCellSpacing_X();
+}
+void appliedDirichletBoundaryCondition(const MESH::RegionID region_id, KERNEL::vector& coef, KERNEL::vector& sp, KERNEL::vector& b, const MESH::structured2dRegularRectangle& mesh,const BoundaryFunction& boundaryFunction ) {
+    GLOBAL::scalar boundaryValue = 0;
+    const MESH::Region& region = mesh.region(region_id);
+    for (auto cellId : region)
+    {
+        appliedDirichlet(cellId,region_id,coef,sp,b,mesh,boundaryFunction);
+    }
+}
+
+void appliedNeumannBoundaryCondition(const MESH::RegionID region_id, KERNEL::vector& coef, KERNEL::vector& sp, KERNEL::vector& b, const MESH::structured2dRegularRectangle& mesh,const BoundaryFunction& boundaryFunction )
 {
     GLOBAL::scalar boundaryValue = 0;
     const MESH::Region& region = mesh.region(region_id);
     for (auto cellId : region)
     {
-        auto cellFacePos = mesh.getCellFacePos(region_id, cellId);
-        switch (boundaryFunction)
-        {
-            case BoundaryFunction::MultiplyXY: boundaryValue =  cellFacePos.first*cellFacePos.second; break;
-            case BoundaryFunction::single    : boundaryValue =  1; break;
-
-        }
         coef[cellId]  = 0.0;
-        b   [cellId] -= 2*mesh.getCellFaceAreal_X()/mesh.getCellSpacing_X() * boundaryValue;  // du har glemt at kigge på Y retningen afhængig af hvilken vej du kigger
-        sp  [cellId] -= 2*mesh.getCellFaceAreal_X()/mesh.getCellSpacing_X();
+        sp  [cellId] += 0*mesh.getCellFaceAreal_X()/mesh.getCellSpacing_X();
     }
 }
 
@@ -386,6 +404,7 @@ TEST_F(FVM_laplaceTests, FVM_localDerichletBCs_UsingMesh_RectangularMesh) {
     appliedDirichletBoundaryCondition(MESH::RegionID::Boundary_top   ,an,sp,b,mesh,BoundaryFunction::MultiplyXY);
     appliedDirichletBoundaryCondition(MESH::RegionID::Boundary_left  ,aw,sp,b,mesh,BoundaryFunction::MultiplyXY);
     appliedDirichletBoundaryCondition(MESH::RegionID::Boundary_bottom,as,sp,b,mesh,BoundaryFunction::MultiplyXY);
+
     buildMatrixWithBandsSpeed(A,ae,aw,as,an,sp,ap,nx);
 
     KERNEL::solve(A, u, b, 1e-10, 2000, KERNEL::BiCGSTAB);
@@ -485,6 +504,7 @@ TEST_F(FVM_laplaceTests, spacVarDerichletBCsSpeed)
         auto j = nx/2 + nx*i;
         EXPECT_NEAR(u[j], solution[i],1e-5);
     }
+    Todo::saveAsCSV(u,"/Users/ri03jm/Library/Mobile Documents/com~apple~CloudDocs/DropboxFolder/Peter/skole/PhD/MatlabScript/output.csv");
 }
 
 
@@ -613,10 +633,10 @@ TEST_F(FVM_laplaceTests, 2DPoissonDerichlet) {
 //  ∇²φ = 0
 
 //BC:
-//  y = 0:  φ(x,0)   = 0          (Dirichlet)
-//  y = 1:  φ(x,1)   = 1          (Dirichlet)
-//  x = 0:  ∂φ/∂x|x=0 = 0         (Neumann, nul gradient)
-//  x = 1:  ∂φ/∂x|x=1 = 0         (Neumann, nul gradient)
+//  y = 0:  φ(x,0)   = 0          (Dirichlet)  (South)
+//  y = 1:  φ(x,1)   = 1          (Dirichlet)  (North)
+//  x = 0:  ∂φ/∂x|x=0 = 0         (Neumann, nul gradient) (West)
+//  x = 1:  ∂φ/∂x|x=1 = 0         (Neumann, nul gradient) (East)
 //
 //Analytisk løsning:
 //  φ(x,y) = y
@@ -624,8 +644,45 @@ TEST_F(FVM_laplaceTests, 2DPoissonDerichlet) {
 // where zero normal gradients at x=0 and x=1.
 TEST_F(FVM_laplaceTests, 2DLaplaceWithDirichletAndNuemannBC)
 {
+    MESH::structured2dRegularRectangle mesh(1,  11,1,11);
+    auto objReg = setUp(mesh.lenX(), mesh.nbCellsX(),mesh.lenY(), mesh.nbCellsY());
+    auto A = objReg.getSparseMatrixRef(AHandle);
+    auto u = objReg.getVectorRef(uHandle);
+    auto b = objReg.getVectorRef(bHandle);
 
+    KERNEL::vector ae(mesh.nbCells(), 0.0),aw(mesh.nbCells(), 0.0),an(mesh.nbCells(), 0.0),as(mesh.nbCells(), 0.0),ap(mesh.nbCells(), 0.0),sp(mesh.nbCells(), 0.0),su(mesh.nbCells(), 0.0);
 
+    for (unsigned int i=0; i < mesh.nbCells(); i++)
+    {
+        ae[i] = aw[i] = an[i] = as[i] = mesh.getCellFaceAreal_X() / mesh.getCellSpacing_X();
+    }
+    appliedNeumannBoundaryCondition  (MESH::RegionID::Boundary_right ,ae,sp,b,mesh,BoundaryFunction::MultiplyY);
+    appliedDirichletBoundaryCondition(MESH::RegionID::Boundary_top   ,an,sp,b,mesh,BoundaryFunction::MultiplyY);
+    appliedNeumannBoundaryCondition  (MESH::RegionID::Boundary_left  ,aw,sp,b,mesh,BoundaryFunction::MultiplyY);
+    appliedDirichletBoundaryCondition(MESH::RegionID::Boundary_bottom,as,sp,b,mesh,BoundaryFunction::MultiplyY);
+
+    buildMatrixWithBandsSpeed(A,ae,aw,as,an,sp,ap,nx);
+
+    KERNEL::solve(A, u, b, 1e-10, 3000, KERNEL::BiCGSTAB);
+
+    KERNEL::vector solution( nx, 0.0 );
+    for (unsigned int i=0; i < nx; i++) {
+        auto x = 0.5*mesh.lenX();
+        auto y = mesh.lenY() - ( 0.5 + i )*mesh.getCellSpacing_Y();
+        solution[i] = y;
+    }
+    //util::printBlaze(A);
+    //util::printBlaze(b);
+
+    for(int i = 0; i < solution.size(); i++)
+    {
+        auto j = nx/2 + nx*i;
+        EXPECT_NEAR(u[j], solution[i],tolerance);
+    }
+
+    //util::printBlaze(u,"A",5,3);
+    //util::printBlaze(b,"b",5,1);
+    Todo::saveAsCSV(u,"/Users/ri03jm/Library/Mobile Documents/com~apple~CloudDocs/DropboxFolder/Peter/skole/PhD/MatlabScript/output.csv");
 }
 
 //2D Poisson equation with mixed Dirichlet/Neumann BCs
@@ -638,13 +695,53 @@ TEST_F(FVM_laplaceTests, 2DLaplaceWithDirichletAndNuemannBC)
 //  φ(x,y) =( -x² + 2 * x ) * y
 //
 //Boundary conditions:
-//  y = 0:  φ(x,0) = 0*x                 (Dirichlet)
-//  x = 0:  φ(0,y) = 0*y                 (Dirichlet)
-//  x = 1:  φ(x,1) = x * ( 1 - x ) + X   (Dirichlet)
-//  y = 1:  ∂φ/∂x|x=1 = 0                (Neumann)
+//  y = 0:  φ(x,0) = 0*x                 (Dirichlet) (West)
+//  x = 0:  φ(0,y) = 0*y                 (Dirichlet) (South)
+//  x = 1:  φ(x,1) = -x * x + 2 * x      (Dirichlet) (North)
+//  y = 1:  ∂φ/∂x|x=1 = 0                (Neumann)   (East)
 // The purpose of this test is to verify that the solver correctly handles more advanced Neumann boundary conditions,
 // where zero normal gradients x=1.
-TEST_F(FVM_laplaceTests, 2DLaplaceWithMixedDirichletAndNuemannBC) {
+//todo  test is not working jet
+TEST_F(FVM_laplaceTests, 2DLaplaceWithMixedDirichletAndNuemannBC)
+{
+    MESH::structured2dRegularRectangle mesh(1,  101,1,101);
+    auto objReg = setUp(mesh.lenX(), mesh.nbCellsX(),mesh.lenY(), mesh.nbCellsY());
+    auto A = objReg.getSparseMatrixRef(AHandle);
+    auto u = objReg.getVectorRef(uHandle);
+    auto b = objReg.getVectorRef(bHandle);
+
+    KERNEL::vector ae(mesh.nbCells(), 0.0),aw(mesh.nbCells(), 0.0),an(mesh.nbCells(), 0.0),as(mesh.nbCells(), 0.0),ap(mesh.nbCells(), 0.0),sp(mesh.nbCells(), 0.0),su(mesh.nbCells(), 0.0);
+
+    for (unsigned int i=0; i < mesh.nbCells(); i++)
+    {
+        ae[i] = aw[i] = an[i] = as[i] = mesh.getCellFaceAreal_X() / mesh.getCellSpacing_X();
+    }
+    appliedDirichletBoundaryCondition(MESH::RegionID::Boundary_right ,ae,sp,b,mesh,BoundaryFunction::SecondPolynomial);
+    appliedDirichletBoundaryCondition(MESH::RegionID::Boundary_top   ,an,sp,b,mesh,BoundaryFunction::SecondPolynomial);
+    appliedDirichletBoundaryCondition(MESH::RegionID::Boundary_left  ,aw,sp,b,mesh,BoundaryFunction::SecondPolynomial);
+    appliedDirichletBoundaryCondition(MESH::RegionID::Boundary_bottom,as,sp,b,mesh,BoundaryFunction::SecondPolynomial);
+
+    buildMatrixWithBandsSpeed(A,ae,aw,as,an,sp,ap,nx);
+
+    KERNEL::solve(A, u, b, 1e-10, 3000, KERNEL::BiCGSTAB);
+
+    KERNEL::vector solution( nx, 0.0 );
+    for (unsigned int i=0; i < nx; i++) {
+        auto x = 0.5*mesh.lenX();
+        auto y = mesh.lenY() - ( 0.5 + i )*mesh.getCellSpacing_Y();
+        solution[i] = -x * x + 2 * x;
+    }
+
+    for(int i = 0; i < solution.size(); i++)
+    {
+        auto j = nx/2 + nx*i;
+        EXPECT_NEAR(u[j], solution[i],tolerance);
+    }
+
+    util::printBlaze(u,"A",5,3);
+    //util::printBlaze(b,"b",5,1);
+    Todo::saveAsCSV(u,"/Users/ri03jm/Library/Mobile Documents/com~apple~CloudDocs/DropboxFolder/Peter/skole/PhD/MatlabScript/output.csv");
+
 }
 
 TEST_F(FVM_laplaceTests, DiffusionCoefficientMatrixTest) {
