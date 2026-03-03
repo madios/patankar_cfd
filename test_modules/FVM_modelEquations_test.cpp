@@ -310,7 +310,7 @@ TEST_F(FVM_laplaceTests, FVM_localDerichletBCs3)
     }
     KERNEL::solve(A, u, b, 1e-15, 100000, KERNEL::BiCGSTAB);
 
-    // theoretical solution, vertical mid-line at x = lenx/2
+    // Theoretical solution, vertical mid-line at x = lenx/2
     KERNEL::vector solution( nx, 0.0 );
     for (unsigned int i=0; i < nx; i++) {
         auto x = 0.5*lenx;
